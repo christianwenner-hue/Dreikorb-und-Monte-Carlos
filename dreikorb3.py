@@ -51,6 +51,9 @@ with st.sidebar:
     exp_vol = st.slider("Vola %", 5.0, 40.0, 15.0)
     infl = st.number_input("Inflation %", 0.0, 10.0, 2.0)
     schwelle = st.slider("K3-Schwelle", 0.0, 1.0, 0.5)
+    
+    # HIER IST DIE NEUE CHECKBOX FÜR DEN SEED
+    use_seed = st.checkbox("Zufall einfrieren (Seed)", value=True)
 h_df = lade_marktdaten(portfolio_mix)
 t1, t2 = st.tabs(["📊 Backtest", "🔮 Monte-Carlo"])
 
@@ -86,13 +89,12 @@ with t1:
             dp_export.to_excel(wr, sheet_name='3_Vergleich_Jahr', index=False)
         st.download_button("📥 Excel laden", buf.getvalue(), "Dreikorb_Analyse.xlsx")
     else:
-        # HIER IST DAS NEUE SICHERHEITSNETZ
         st.error("📉 **Keine Marktdaten empfangen!**")
         st.warning("Yahoo Finance hat die Verbindung kurzzeitig blockiert. Das passiert oft, wenn Slider zu schnell gezogen werden (Spamschutz).\n\n👉 **Lösung:** Warte ca. 5-10 Sekunden und verändere einen Slider noch einmal leicht, um die Daten neu zu laden.")
 
 with t2:
     if st.button("🚀 Start Monte Carlo", use_container_width=True):
-        res, rate = simulationen.run_monte_carlo(100, alt_j, alt_z, k1_s, k2_s, k3_s, r_std, r_a, a_a, r_b, a_b, g_s, exp_ret, exp_vol, infl, k1_j, k2_j, schwelle)
+        res, rate = simulationen.run_monte_carlo(100, alt_j, alt_z, k1_s, k2_s, k3_s, r_std, r_a, a_a, r_b, a_b, g_s, exp_ret, exp_vol, infl, k1_j, k2_j, schwelle, seed=use_seed)
         st.subheader(f"Erfolgsquote: {rate:.1%}")
         x = np.linspace(alt_j, alt_z, res.shape[1])
         df_mc = pd.DataFrame({"Alter": x, "Median": np.median(res, axis=0), "P10": np.percentile(res, 10, axis=0), "P90": np.percentile(res, 90, axis=0)})
@@ -101,7 +103,7 @@ with t2:
         
     if st.button("💡 Maximale Rente"):
         with st.spinner("Rechne..."):
-            max_r = simulationen.berechne_swr(100, alt_j, alt_z, k1_s, k2_s, k3_s, g_s, exp_ret, exp_vol, infl, k1_j, k2_j, schwelle)
+            max_r = simulationen.berechne_swr(100, alt_j, alt_z, k1_s, k2_s, k3_s, g_s, exp_ret, exp_vol, infl, k1_j, k2_j, schwelle, seed=use_seed)
             st.success(f"Max. sichere Rente: {max_r} € / Monat")
 
 st.divider()
