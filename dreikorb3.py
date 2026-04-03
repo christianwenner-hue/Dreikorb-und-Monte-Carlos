@@ -51,15 +51,12 @@ with st.sidebar:
     exp_vol = st.slider("Vola %", 5.0, 40.0, 15.0)
     infl = st.number_input("Inflation %", 0.0, 10.0, 2.0)
     schwelle = st.slider("K3-Schwelle", 0.0, 1.0, 0.5)
-    
-    # HIER IST DIE NEUE CHECKBOX FÜR DEN SEED
     use_seed = st.checkbox("Zufall einfrieren (Seed)", value=True)
 h_df = lade_marktdaten(portfolio_mix)
 t1, t2 = st.tabs(["📊 Backtest", "🔮 Monte-Carlo"])
 
 with t1:
     s_jahr = st.number_input("Startjahr", 2000, 2024, 2016)
-    
     if not h_df.empty:
         d3, _, dp, _, _ = simulationen.simuliere_historie(h_df, s_jahr, alt_j, k1_s, k2_s, k3_s, r_std, r_a, a_a, r_b, a_b, g_s, infl/100, k1_j, k2_j, schwelle)
         st.metric("Endvermögen", f"{dp['Gesamt'].iloc[-1]:,.0f} €")
@@ -90,16 +87,42 @@ with t1:
         st.download_button("📥 Excel laden", buf.getvalue(), "Dreikorb_Analyse.xlsx")
     else:
         st.error("📉 **Keine Marktdaten empfangen!**")
-        st.warning("Yahoo Finance hat die Verbindung kurzzeitig blockiert. Das passiert oft, wenn Slider zu schnell gezogen werden (Spamschutz).\n\n👉 **Lösung:** Warte ca. 5-10 Sekunden und verändere einen Slider noch einmal leicht, um die Daten neu zu laden.")
+        st.warning("Yahoo Finance blockiert kurzzeitig. Bitte 5-10 Sek. warten und einen Slider leicht bewegen.")
 
 with t2:
     if st.button("🚀 Start Monte Carlo", use_container_width=True):
         res, rate = simulationen.run_monte_carlo(100, alt_j, alt_z, k1_s, k2_s, k3_s, r_std, r_a, a_a, r_b, a_b, g_s, exp_ret, exp_vol, infl, k1_j, k2_j, schwelle, seed=use_seed)
-        st.subheader(f"Erfolgsquote: {rate:.1%}")
+        
+        # Datenauswertung für Chart und Metrik
         x = np.linspace(alt_j, alt_z, res.shape[1])
-        df_mc = pd.DataFrame({"Alter": x, "Median": np.median(res, axis=0), "P10": np.percentile(res, 10, axis=0), "P90": np.percentile(res, 90, axis=0)})
-        c_mc = alt.Chart(df_mc).encode(x='Alter:Q')
-        st.altair_chart((c_mc.mark_area(opacity=0.3, color='lightblue').encode(y='P10:Q', y2='P90:Q') + c_mc.mark_line(color='blue').encode(y='Median:Q')).properties(height=400), use_container_width=True)
+        df_mc = pd.DataFrame({
+            "Alter": x, 
+            "Median": np.median(res, axis=0), 
+            "P10": np.percentile(res, 10, axis=0), 
+            "P90": np.percentile(res, 90, axis=0)
+        })
+        
+        # Anzeige der Metriken
+        c1, c2 = st.columns(2)
+        c1.metric("Erfolgsquote", f"{rate:.1%}")
+        c2.metric("Median Endvermögen", f"{df_mc['Median'].iloc[-1]:,.0f} €")
+        
+        # Interaktiver MC-Chart
+        c_mc = alt.Chart(df_mc).encode(x=alt.X('Alter:Q', title='Alter'))
+        area = c_mc.mark_area(opacity=0.3, color='lightblue').encode(
+            y=alt.Y('P10:Q', title='Gesamtvermögen (€)'), 
+            y2='P90:Q'
+        )
+        line = c_mc.mark_line(color='blue', size=3).encode(
+            y='Median:Q',
+            tooltip=[
+                alt.Tooltip('Alter:Q', format='.1f', title='Alter'),
+                alt.Tooltip('Median:Q', format=',.0f', title='Median (Gesamt) €'),
+                alt.Tooltip('P10:Q', format=',.0f', title='Schlechtfall (P10) €'),
+                alt.Tooltip('P90:Q', format=',.0f', title='Bestfall (P90) €')
+            ]
+        )
+        st.altair_chart((area + line).properties(height=400), use_container_width=True)
         
     if st.button("💡 Maximale Rente"):
         with st.spinner("Rechne..."):
