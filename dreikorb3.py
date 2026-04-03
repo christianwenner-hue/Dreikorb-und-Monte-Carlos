@@ -93,7 +93,7 @@ with t2:
     if st.button("🚀 Start Monte Carlo", use_container_width=True):
         res, rate = simulationen.run_monte_carlo(100, alt_j, alt_z, k1_s, k2_s, k3_s, r_std, r_a, a_a, r_b, a_b, g_s, exp_ret, exp_vol, infl, k1_j, k2_j, schwelle, seed=use_seed)
         
-        # Datenauswertung für Chart und Metrik
+        # Datenauswertung
         x = np.linspace(alt_j, alt_z, res.shape[1])
         df_mc = pd.DataFrame({
             "Alter": x, 
@@ -102,7 +102,7 @@ with t2:
             "P90": np.percentile(res, 90, axis=0)
         })
         
-        # Anzeige der Metriken
+        # Anzeige der Metriken (Volle Euro)
         c1, c2 = st.columns(2)
         c1.metric("Erfolgsquote", f"{rate:.1%}")
         c2.metric("Median Endvermögen", f"{df_mc['Median'].iloc[-1]:,.0f} €")
@@ -115,11 +115,15 @@ with t2:
         )
         line = c_mc.mark_line(color='blue', size=3).encode(
             y='Median:Q',
+            # --- JETZT MIT GEWÜNSCHTER RUNDUNG ---
             tooltip=[
-                alt.Tooltip('Alter:Q', format='.1f', title='Alter'),
+                # Alter auf volle Jahre runden
+                alt.Tooltip('Alter:Q', format='.0f', title='Alter (Jahre)'),
+                # Euro-Werte auf glatte Euro runden (0 Nachkommastellen)
                 alt.Tooltip('Median:Q', format=',.0f', title='Median (Gesamt) €'),
                 alt.Tooltip('P10:Q', format=',.0f', title='Schlechtfall (P10) €'),
-                alt.Tooltip('P90:Q', format=',.0f', title='Bestfall (P90) €')
+                # Klarere Benennung für den Erfolgsfall
+                alt.Tooltip('P90:Q', format=',.0f', title='P90 (Bestfall/Erfolg) €')
             ]
         )
         st.altair_chart((area + line).properties(height=400), use_container_width=True)
