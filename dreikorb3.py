@@ -10,14 +10,18 @@ import simulationen
 st.set_page_config(page_title="Dreikorb Profi v10.5", layout="wide")
 st.title("📊 Dreikorb-Strategie Cockpit")
 
-with st.sidebar:
-    st.header("🏢 Setup")
+# --- HEADER LAYOUT (4 SPALTEN) ---
+c_setup, c_mix, c_rente, c_mc = st.columns(4)
+
+with c_setup:
+    st.subheader("🏢 Setup")
     k1_s = st.number_input("K1 Cash", 0.0, value=30000.0)
     k2_s = st.number_input("K2 Anleihen", 0.0, value=30000.0)
     k3_s = st.number_input("K3 Aktien", 0.0, value=520000.0)
     g_s = st.slider("Gewinn %", 0, 100, 30) / 100
-    
-    st.header("📂 Portfolio-Mix")
+
+with c_mix:
+    st.subheader("📂 Portfolio-Mix")
     w_msci = st.slider("MSCI World %", 0, 100, 50)
     w_ndx = st.slider("Nasdaq 100 %", 0, 100, 30)
     w_sp = st.slider("S&P 500 %", 0, 100, 20)
@@ -35,7 +39,8 @@ with st.sidebar:
         st.error("❗ Bitte Mix wählen.")
         portfolio_mix = {"URTH": 100, "^NDX": 0, "^GSPC": 0, "^GDAXI": 0}
 
-    st.header("💰 Rente")
+with c_rente:
+    st.subheader("💰 Rente")
     alt_j = st.number_input("Alter", 18, 100, 53)
     r_a = st.number_input("Rente A", 0, 10000, value=2500)
     a_a = st.number_input("Bis A", alt_j, 110, 65)
@@ -43,8 +48,8 @@ with st.sidebar:
     a_b = st.number_input("Bis B", a_a, 110, 95)
     r_std = st.number_input("Standard Rente", 0, 10000, value=2500)
     alt_z = st.number_input("Ziel Alter", a_b, 110, 95)
-    
-    st.header("🛡️ Puffer & MC")
+with c_mc:
+    st.subheader("🛡️ Puffer & MC")
     k1_j = st.slider("K1 Jahre", 0.5, 3.0, 1.0)
     k2_j = st.slider("K2 Jahre", 1.0, 5.0, 1.0)
     exp_ret = st.slider("Rendite %", 0.0, 15.0, 7.5)
@@ -54,6 +59,9 @@ with st.sidebar:
     n_sim = st.slider("Anzahl Simulationen (Loops)", 100, 5000, 1000, step=100)
     mc_methode_ui = st.radio("MC Daten-Basis", ["Mathematisch (Normalverteilung)", "Historisch (Bootstrapping)"])
     use_seed = st.checkbox("Zufall einfrieren (Seed)", value=True)
+
+st.divider() # Optische Trennung zwischen Header und Charts
+
 h_df = lade_marktdaten(portfolio_mix)
 t1, t2 = st.tabs(["📊 Backtest", "🔮 Monte-Carlo"])
 
@@ -100,11 +108,9 @@ with t1:
         st.download_button("📥 Excel laden", buf.getvalue(), "Dreikorb_Analyse.xlsx")
     else:
         st.error("📉 Keine Marktdaten.")
-
 with t2:
     methode_param = "math" if "Mathematisch" in mc_methode_ui else "hist"
     if st.button("🚀 Start Monte Carlo", use_container_width=True):
-        # res liefert das Gesamtvermögen, res_brutto liefert die exakten Bruttoentnahmen
         res, res_brutto, rate = simulationen.run_monte_carlo(n_sim, alt_j, alt_z, k1_s, k2_s, k3_s, r_std, r_a, a_a, r_b, a_b, g_s, exp_ret, exp_vol, infl, k1_j, k2_j, schwelle, seed=use_seed, method=methode_param, h_df=h_df)
         
         monate = res.shape[1]
@@ -118,7 +124,6 @@ with t2:
             "P10": np.percentile(res, 10, axis=0), 
             "P90": np.percentile(res, 90, axis=0),
             "Entnahme_Netto": renten_netto, 
-            # Wir nehmen den Median der 5.000 simulierten Brutto-Werte pro Monat
             "Entnahme_Brutto_Median": np.median(res_brutto, axis=0) 
         })
         
@@ -141,6 +146,7 @@ with t2:
             ]
         )
         st.altair_chart((area + line).properties(height=400), use_container_width=True)
+        
     if st.button("💡 Maximale Rente"):
         with st.spinner("Rechne..."):
             max_r = simulationen.berechne_swr(n_sim, alt_j, alt_z, k1_s, k2_s, k3_s, g_s, exp_ret, exp_vol, infl, k1_j, k2_j, schwelle, seed=use_seed, method=methode_param, h_df=h_df)
@@ -149,5 +155,4 @@ with t2:
 st.divider()
 try:
     with open("README.md", "r", encoding="utf-8") as f: st.markdown(f.read())
-except FileNotFoundError: st.warning("README.md fehlt.")    
-  
+except FileNotFoundError: st.warning("README.md fehlt.")
