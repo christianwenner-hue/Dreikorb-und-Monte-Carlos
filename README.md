@@ -58,7 +58,29 @@ Vergleicht die Dreikorb-Strategie mit einem **Vollinvest-Szenario**.
 * **Orange (gestrichelt):** 100% Aktienquote (höheres Risiko, keine Puffer-Logik).
 
 ### Monte-Carlo & SWR
-* **Fächer-Grafik:** Zeigt den Median (Mitte) sowie den Bestfall (P90) und Schlechtfall (P10) aus 100 Zufallsszenarien.
+### 1. Daten-Basis: Mathematisch vs. Historisch
+Du kannst nun in der Seitenleiste zwischen zwei Simulationsmethoden wählen:
+* **Mathematisch (Normalverteilung):** Das Standard-Verfahren. Renditen werden anhand der eingestellten erwarteten Rendite und Volatilität (Glockenkurve) zufällig erwürfelt.
+* **Historisch (Bootstrapping):** Der Realitäts-Check. Die Simulation greift blind in den Topf der *echten, historischen Monatsrenditen* deines gewählten Portfolio-Mixes und zieht für jeden Zukunftsmonat ein zufälliges "Los" (Ziehen mit Zurücklegen). So werden echte Marktrisiken und extreme Crash-Szenarien ("Fat Tails") realistisch in die Zukunft projiziert.
+
+### 2. Dynamische Simulations-Loops
+Die Anzahl der berechneten Zukünfte (Lebenspfade) lässt sich über den Slider **"Anzahl Simulationen (Loops)"** flexibel von 100 bis auf 5.000 erhöhen.
+* **Tipp:** 100 Loops eignen sich für blitzschnelle Tests. Für statistisch extrem belastbare Ergebnisse (besonders beim Bootstrapping) solltest du 1.000 bis 5.000 Loops wählen.
+* **Hinweis:** Bei 5.000 Loops führt das System über 2 Millionen Einzelberechnungen durch. Die Ladezeit kann dann ein paar Sekunden in Anspruch nehmen.
+
+### 3. Exakte Brutto-Entnahme (Median)
+Das System schätzt die Steuern nicht mehr nur pauschal, sondern berechnet in der Monte-Carlo-Simulation für jeden der bis zu 5.000 Lebenspfade in jedem einzelnen Monat die *exakt anfallende Steuer* (basierend auf der Teilfreistellung, dem persönlichen Steuersatz und dem simulierten Depotstand). 
+Da sich die Steuerlast je nach simuliertem Börsenverlauf ändert, sammelt das System alle 5.000 Brutto-Werte eines Monats und zeigt dir im Chart den **Median der Brutto-Entnahmen** an. Das bietet die fairste und genaueste Schätzung für den realen monatlichen Kapitalabfluss.
+
+### 4. Transparente und glatte Tooltips
+Fährst du mit der Maus über den Monte-Carlo-Chart (blaue Linie), erhältst du sofort einen übersichtlichen Einblick in das jeweilige Lebensjahr:
+* **Alter:** In vollen Jahren.
+* **Ziel-Rente Netto:** Dein garantierter Auszahlungsbetrag nach Inflation.
+* **Reale Entnahme Brutto (Median):** Wie viel Kapital (inkl. Steuern) in einem mittleren Szenario verkauft werden musste, um die Netto-Rente zu decken.
+* **Median, P10 & P90:** Das wahrscheinlichste Endvermögen sowie der Worst-Case (10. Perzentil) und Best-Case (90. Perzentil) – durchgehend lesbar auf glatte Euro gerundet.
+
+### 5. Zufall einfrieren (Seed)
+Über die Checkbox **"Zufall einfrieren (Seed)"** in der Seitenleiste kannst du die Zufallszahlen fixieren. Ist der Haken gesetzt, liefert die Monte-Carlo-Simulation bei unveränderten Einstellungen immer exakt denselben Chart. Das ist ideal, um die exakten Auswirkungen einzelner Slider (z. B. "K1 Jahre" oder "Gewinnanteil") unverfälscht miteinander zu vergleichen.
 * **SWR (Safe Withdrawal Rate):** Berechnet die maximal mögliche Rente, die in 95% aller Fälle bis zum Zielalter ausreicht.
 
 ## 📥 Excel-Analyse
