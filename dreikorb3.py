@@ -7,7 +7,7 @@ from mathe_utils import lade_marktdaten
 import simulationen
 
 # --- UI SETUP ---
-st.set_page_config(page_title="Dreikorb Profi v10.5", layout="wide")
+st.set_page_config(page_title="Dreikorb Profi v10.7", layout="wide")
 st.title("📊 Dreikorb-Strategie Cockpit")
 
 # --- HEADER LAYOUT (4 SPALTEN) ---
@@ -22,22 +22,23 @@ with c_setup:
 
 with c_mix:
     st.subheader("📂 Portfolio-Mix")
-    w_msci = st.slider("MSCI World %", 0, 100, 50)
-    w_ndx = st.slider("Nasdaq 100 %", 0, 100, 30)
-    w_sp = st.slider("S&P 500 %", 0, 100, 20)
+    w_msci = st.slider("MSCI World %", 0, 100, 0)
+    w_ndx = st.slider("Nasdaq 100 %", 0, 100, 25)
+    w_sp = st.slider("S&P 500 %", 0, 100, 25)
+    w_rut = st.slider("Russell 2000 %", 0, 100, 50)
     w_dax = st.slider("DAX %", 0, 100, 0)
     
-    total_w = w_msci + w_ndx + w_sp + w_dax
+    total_w = w_msci + w_ndx + w_sp + w_rut + w_dax
     if total_w == 100:
         st.success("✅ Allokation: 100%")
-        portfolio_mix = {"URTH": w_msci, "^NDX": w_ndx, "^GSPC": w_sp, "^GDAXI": w_dax}
+        portfolio_mix = {"URTH": w_msci, "^NDX": w_ndx, "^GSPC": w_sp, "^RUT": w_rut, "^GDAXI": w_dax}
     elif total_w > 0:
         st.warning(f"⚠️ Normiert auf 100% (Summe war {total_w}%)")
         f = 100.0 / total_w
-        portfolio_mix = {"URTH": w_msci*f, "^NDX": w_ndx*f, "^GSPC": w_sp*f, "^GDAXI": w_dax*f}
+        portfolio_mix = {"URTH": w_msci*f, "^NDX": w_ndx*f, "^GSPC": w_sp*f, "^RUT": w_rut*f, "^GDAXI": w_dax*f}
     else:
         st.error("❗ Bitte Mix wählen.")
-        portfolio_mix = {"URTH": 100, "^NDX": 0, "^GSPC": 0, "^GDAXI": 0}
+        portfolio_mix = {"URTH": 100, "^NDX": 0, "^GSPC": 0, "^RUT": 0, "^GDAXI": 0}
 
 with c_rente:
     st.subheader("💰 Rente")
