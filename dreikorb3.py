@@ -7,7 +7,7 @@ from mathe_utils import lade_marktdaten
 import simulationen
 
 # --- UI SETUP ---
-st.set_page_config(page_title="Dreikorb Profi v10.7", layout="wide")
+st.set_page_config(page_title="Dreikorb Profi v10.9", layout="wide")
 st.title("📊 Dreikorb-Strategie Cockpit")
 
 # --- HEADER LAYOUT (4 SPALTEN) ---
@@ -15,30 +15,29 @@ c_setup, c_mix, c_rente, c_mc = st.columns(4)
 
 with c_setup:
     st.subheader("🏢 Setup")
-    k1_s = st.number_input("K1 Cash", 0.0, value=30000.0)
-    k2_s = st.number_input("K2 Anleihen", 0.0, value=30000.0)
-    k3_s = st.number_input("K3 Aktien", 0.0, value=520000.0)
+    k1_s = st.number_input("K1 Cash", 0.0, value=30000.0, step=5000.0)
+    k2_s = st.number_input("K2 Anleihen", 0.0, value=30000.0, step=5000.0)
+    k3_s = st.number_input("K3 Aktien", 0.0, value=520000.0, step=5000.0)
     g_s = st.slider("Gewinn %", 0, 100, 30) / 100
 
 with c_mix:
     st.subheader("📂 Portfolio-Mix")
-    w_msci = st.slider("MSCI World %", 0, 100, 0)
-    w_ndx = st.slider("Nasdaq 100 %", 0, 100, 25)
-    w_sp = st.slider("S&P 500 %", 0, 100, 25)
-    w_rut = st.slider("Russell 2000 %", 0, 100, 50)
-    w_dax = st.slider("DAX %", 0, 100, 0)
+    w_ndx = st.slider("Nasdaq 100 %", 0, 100, 25, step=5)
+    w_sp = st.slider("S&P 500 %", 0, 100, 25, step=5)
+    w_rut = st.slider("Russell 2000 %", 0, 100, 50, step=5)
+    w_dax = st.slider("DAX %", 0, 100, 0, step=5)
     
-    total_w = w_msci + w_ndx + w_sp + w_rut + w_dax
+    total_w = w_ndx + w_sp + w_rut + w_dax
     if total_w == 100:
         st.success("✅ Allokation: 100%")
-        portfolio_mix = {"URTH": w_msci, "^NDX": w_ndx, "^GSPC": w_sp, "^RUT": w_rut, "^GDAXI": w_dax}
+        portfolio_mix = {"^NDX": w_ndx, "^GSPC": w_sp, "^RUT": w_rut, "^GDAXI": w_dax}
     elif total_w > 0:
         st.warning(f"⚠️ Normiert auf 100% (Summe war {total_w}%)")
         f = 100.0 / total_w
-        portfolio_mix = {"URTH": w_msci*f, "^NDX": w_ndx*f, "^GSPC": w_sp*f, "^RUT": w_rut*f, "^GDAXI": w_dax*f}
+        portfolio_mix = {"^NDX": w_ndx*f, "^GSPC": w_sp*f, "^RUT": w_rut*f, "^GDAXI": w_dax*f}
     else:
         st.error("❗ Bitte Mix wählen.")
-        portfolio_mix = {"URTH": 100, "^NDX": 0, "^GSPC": 0, "^RUT": 0, "^GDAXI": 0}
+        portfolio_mix = {"^NDX": 25, "^GSPC": 25, "^RUT": 50, "^GDAXI": 0}
 
 with c_rente:
     st.subheader("💰 Rente")
@@ -56,7 +55,7 @@ with c_mc:
     exp_ret = st.slider("Rendite %", 0.0, 15.0, 7.5)
     exp_vol = st.slider("Vola %", 5.0, 40.0, 15.0)
     infl = st.number_input("Inflation %", 0.0, 10.0, 2.0)
-    schwelle = st.slider("K3-Schwelle", 0.0, 1.0, 0.5)
+    schwelle = st.slider("Drawdown Toleranz %", 0, 50, 10) / 100.0
     n_sim = st.slider("Anzahl Simulationen (Loops)", 100, 5000, 1000, step=100)
     mc_methode_ui = st.radio("MC Daten-Basis", ["Mathematisch (Normalverteilung)", "Historisch (Bootstrapping)"])
     use_seed = st.checkbox("Zufall einfrieren (Seed)", value=True)
