@@ -110,6 +110,11 @@ with t1:
         st.error("📉 Keine Marktdaten.")
 with t2:
     methode_param = "math" if "Mathematisch" in mc_methode_ui else "hist"
+    
+    # NEU: Transparente Warnung, falls Fallback greift
+    if methode_param == "hist" and h_df.empty:
+        st.warning("⚠️ Yahoo Finance liefert aktuell keine Daten. Das System nutzt als Fallback die mathematische Normalverteilung.")
+        
     if st.button("🚀 Start Monte Carlo", use_container_width=True):
         res, res_brutto, rate = simulationen.run_monte_carlo(n_sim, alt_j, alt_z, k1_s, k2_s, k3_s, r_std, r_a, a_a, r_b, a_b, g_s, exp_ret, exp_vol, infl, k1_j, k2_j, schwelle, seed=use_seed, method=methode_param, h_df=h_df)
         
