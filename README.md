@@ -17,8 +17,11 @@ Die Strategie basiert auf einer dynamischen Drei-Säulen-Struktur:
 Alle Steuerungselemente befinden sich nun übersichtlich in vier Spalten am oberen Bildschirmrand. 
 * **Schrittweiten:** Portfolio-Mix-Slider lassen sich in **5%-Schritten** justieren. Die Startwerte der Körbe (K1-K3) lassen sich komfortabel in **5.000 €-Schritten** anpassen.
 
-### 2. Dynamische Steuer-Logik (Brutto/Netto)
-Das System berücksichtigt die **25% Kapitalertragsteuer (+Soli)** sowie die **30% Teilfreistellung** für Aktienfonds. Über den Slider **"Gewinn %"** definierst du den kalkulatorischen Gewinnanteil deines Depots zum Startzeitpunkt. Das Programm berechnet daraufhin automatisch, wie viel Brutto verkauft werden muss, um deine gewünschte Netto-Rente zu erzielen.
+### 2. Mitatmende Steuer-Logik & Dynamischer Kaufwert
+Das System schätzt Steuern nicht pauschal, sondern führt im Hintergrund ein exaktes Kassenbuch über deinen steuerfreien **Kaufwert** (das ursprünglich investierte Grundkapital). Dabei werden die **25% Kapitalertragsteuer (+Soli)** sowie die **30% Teilfreistellung** für Aktienfonds berücksichtigt.
+* **Der Start:** Über den Slider **"Gewinn %"** definierst du den initialen Gewinnanteil deines Depots. (Beispiel: 30 % Gewinn bedeuten, die restlichen 70 % merkt sich das System als dein steuerfreies Grundkapital).
+* **Dynamische Kursgewinne:** Wächst dein Depot in der Simulation durch Börsen-Rallyes an, steigt automatisch auch der prozentuale Gewinnanteil in deinem Portfolio (z. B. auf 60 % oder 80 %). Die berechnete Steuerlast *atmet* hochgradig realistisch mit deinen Depotkursen mit.
+* **Die Entnahme:** Bei jedem Verkauf berechnet das System in Echtzeit deinen aktuellen Gewinnanteil und entnimmt exakt so viel Brutto, wie nötig ist, um deine garantierte Netto-Rente zu decken. Der verkaufte Anteil deines Grundkapitals wird dabei sauber vom Kaufwert abgezogen.
 
 ### 3. Inflations-Management
 Alle Rentenphasen sowie die Ziel-Limits der Sicherheitskörbe (K1/K2) werden monatlich an die gewählte Inflationsrate angepasst, um die reale Kaufkraft zu erhalten.
@@ -75,27 +78,23 @@ Bevor die Simulation startet, wählst du aus, aus welchem Daten-Pool das System 
 * **Methode B: Mathematisch (Normalverteilung):** Das ist das akademische Modell. Du gibst über die Slider eine fiktive erwartete Rendite (z. B. 7,5 %) und eine Schwankungsbreite (Vola, z. B. 15 %) vor. Das System berechnet daraus eine klassische Glockenkurve und zieht für jeden Zukunftsmonat eine rein mathematische, zufällige Rendite.
 
 #### 2. Was passiert in EINEM Durchlauf (Szenario)?
-Ein einziger Durchlauf repräsentiert **einen kompletten Lebenspfad** von deinem Startalter (z. B. 53 Jahre) bis zu deinem Zielalter (z. B. 95 Jahre). Das sind 42 Jahre oder exakt **504 Monate**. 
+Ein einziger Durchlauf repräsentiert **einen kompletten Lebenspfad** von deinem Startalter bis zu deinem Zielalter (z. B. 42 Jahre = **504 Monate**). 
 
-Für jeden einzelnen dieser 504 Monate rechnet das System im Hintergrund deine komplette Strategie-Logik durch:
+Für jeden einzelnen dieser Monate rechnet das System im Hintergrund deine komplette Strategie-Logik durch:
 1. **Marktschwankung:** Das System würfelt die Rendite für den aktuellen Monat und passt den Wert deines Aktienkorbs (K3) an.
 2. **Inflation:** Deine garantierte Netto-Rente sowie die Ziel-Stände deiner Puffer (K1 & K2) werden um die Inflationsrate erhöht.
 3. **Der Krisen-Check:** Das System prüft deinen Drawdown. Liegt Korb 3 nahe am Allzeithoch oder herrscht Krise?
 4. **Steuer & Entnahme:** Das mitatmende Kassenbuch berechnet deinen exakten, aktuellen Kursgewinnanteil. Die Steuer wird abgezogen und die Rente (je nach Krisen-Status) aus K3 oder den Puffern entnommen.
 5. **Rebalancing:** Wenn Börsen-Boom herrscht, werden leere Puffer aus Korb 3 wieder aufgefüllt.
 
-Wenn der Monat abgeschlossen ist, geht das System in den nächsten Monat. Geht dir vor dem Zielalter das Geld komplett aus (Depotwert = 0), gilt dieser eine Lebenspfad als "Gescheitert". Überlebt dein Depot bis zum 95. Lebensjahr, gilt der Pfad als "Erfolgreich".
+Geht dir vor dem Zielalter das Geld komplett aus, gilt dieser Lebenspfad als "Gescheitert". Überlebt dein Depot bis zum Zielalter, gilt der Pfad als "Erfolgreich".
 
 #### 3. Was macht das System gesamthaft?
-Das System durchläuft dieses komplette 504-Monats-Szenario nicht nur einmal, sondern (je nach Slider) **z. B. 5.000 Mal**. Bei 5.000 Loops führt dein Computer in wenigen Sekunden über 2,5 Millionen Einzelmonats-Berechnungen durch.
-
-Am Ende sammelt das Programm alle 5.000 Lebensläufe ein und wertet sie statistisch für dich aus:
-* **Erfolgsquote:** Wie viele der 5.000 simulierten Zukünfte hast du finanziell überlebt? (Zeigt z. B. 98,5 %).
-* **Der Median (Blaue Linie):** Das ist der mittlere Weg. Genau 50 % der Simulationen liefen besser, 50 % liefen schlechter. Dies ist der wahrscheinlichste Ausgang deines Ruhestands.
-* **P10 & P90 (Der hellblaue Schlauch):** Das P10 (10. Perzentil) ist dein realistischer **Worst-Case**. Nur 10 % aller durchgespielten Crash-Szenarien verliefen noch schlimmer als diese untere Kante. Das P90 ist dein **Best-Case**.
-* **Der SWR-Rechner (Maximale Rente):** Wenn du auf den Button klickst, spielt das System dieses 5.000-fache Multiversum dutzende Male hintereinander mit verschiedenen Entnahmebeträgen durch. Es sucht vollautomatisch genau den Euro-Betrag für deine Rente, bei dem die Erfolgsquote am Ende bei punktgenau 95 % liegt.
-
- durchhält.
+Das System durchläuft dieses komplette 504-Monats-Szenario nicht nur einmal, sondern (je nach Slider) **z. B. 5.000 Mal**. Bei 5.000 Loops führt dein Computer in wenigen Sekunden über 2,5 Millionen Einzelmonats-Berechnungen durch. Am Ende sammelt das Programm alle Lebensläufe ein und wertet sie aus:
+* **Erfolgsquote:** Wie viele der simulierten Zukünfte hast du finanziell überlebt? (z. B. 98,5 %).
+* **Der Median (Blaue Linie):** Der mittlere Weg (50 % liefen besser, 50 % schlechter). Der wahrscheinlichste Ausgang.
+* **P10 & P90 (Der hellblaue Schlauch):** Das P10 ist dein **Worst-Case** (nur 10 % liefen schlechter). Das P90 ist dein **Best-Case**.
+* **Der SWR-Rechner (Maximale Rente):** Das System sucht vollautomatisch genau den Euro-Betrag für deine Rente, bei dem die Erfolgsquote am Ende bei punktgenau 95 % liegt.
 
 ### 📥 Excel-Export
 Der Export liefert detaillierte monatliche Daten für deine persönliche Archivierung und tiefergehende Analysen.
