@@ -64,10 +64,38 @@ Ermöglicht den Stresstest durch echte historische Krisen (z. B. Dotcom-Blase 20
 * **Blau:** Dreikorb-Strategie (mit aktivem Drawdown-Schutz und Rebalancing).
 * **Orange (gestrichelt):** Vollinvest-Szenario (100% Aktien, kein Schutz).
 
-### Monte-Carlo & SWR
-* **Daten-Basis:** Wähle zwischen der mathematischen Normalverteilung oder dem **Historischen Bootstrapping**, das echte historische Monatsrenditen zufällig kombiniert.
-* **Median Brutto-Entnahme:** Der Chart zeigt dir genau, wie viel Brutto-Kapital im Median über 5.000 Simulationsläufe inkl. Steuern abgeflossen ist.
-* **SWR (Maximale Rente):** Ermittelt den maximalen **Netto-Betrag**, den du monatlich entnehmen kannst, damit dein Depot in 95 % aller simulierten Zukünfte bis zum Zielalter durchhält.
+### 🔮 Die Monte-Carlo-Simulation (Das Multiversum deines Ruhestands)
+
+Während der historische Backtest dir zeigt, wie deine Strategie in der *Vergangenheit* (z. B. 2008) abgeschnitten hätte, wirft die Monte-Carlo-Simulation einen Blick in alle möglichen *Zukünfte*. Da niemand weiß, wie sich die Börse in den nächsten 30 Jahren exakt verhalten wird, berechnet das System nicht nur eine einzige Zukunft, sondern erschafft ein **"Multiversum" aus bis zu 5.000 verschiedenen Lebensläufen**. 
+
+#### 1. Auf welche Daten greift das System zu? (Die zwei Motoren)
+Bevor die Simulation startet, wählst du aus, aus welchem Daten-Pool das System die zukünftigen Börsenkurse würfeln soll:
+
+* **Methode A: Historisch (Bootstrapping):** Das ist der Realitäts-Check. Das System lädt alle echten, historisch gemessenen Monatsrenditen deines gewählten Index-Mixes herunter. Wenn es nun eine neue Zukunft simuliert, greift es blind in diesen großen Topf voller historischer Monate und zieht einen zufälligen heraus (z. B. den Krisen-Monat Oktober 1987, dann den Boom-Monat November 2020 usw.). Das nennt sich *Ziehen mit Zurücklegen*. So entstehen tausende neue, wilde Börsenverläufe, die aber alle aus echten, extremen historischen Marktschwankungen (Crashs und Rallyes) bestehen.
+* **Methode B: Mathematisch (Normalverteilung):** Das ist das akademische Modell. Du gibst über die Slider eine fiktive erwartete Rendite (z. B. 7,5 %) und eine Schwankungsbreite (Vola, z. B. 15 %) vor. Das System berechnet daraus eine klassische Glockenkurve und zieht für jeden Zukunftsmonat eine rein mathematische, zufällige Rendite.
+
+#### 2. Was passiert in EINEM Durchlauf (Szenario)?
+Ein einziger Durchlauf repräsentiert **einen kompletten Lebenspfad** von deinem Startalter (z. B. 53 Jahre) bis zu deinem Zielalter (z. B. 95 Jahre). Das sind 42 Jahre oder exakt **504 Monate**. 
+
+Für jeden einzelnen dieser 504 Monate rechnet das System im Hintergrund deine komplette Strategie-Logik durch:
+1. **Marktschwankung:** Das System würfelt die Rendite für den aktuellen Monat und passt den Wert deines Aktienkorbs (K3) an.
+2. **Inflation:** Deine garantierte Netto-Rente sowie die Ziel-Stände deiner Puffer (K1 & K2) werden um die Inflationsrate erhöht.
+3. **Der Krisen-Check:** Das System prüft deinen Drawdown. Liegt Korb 3 nahe am Allzeithoch oder herrscht Krise?
+4. **Steuer & Entnahme:** Das mitatmende Kassenbuch berechnet deinen exakten, aktuellen Kursgewinnanteil. Die Steuer wird abgezogen und die Rente (je nach Krisen-Status) aus K3 oder den Puffern entnommen.
+5. **Rebalancing:** Wenn Börsen-Boom herrscht, werden leere Puffer aus Korb 3 wieder aufgefüllt.
+
+Wenn der Monat abgeschlossen ist, geht das System in den nächsten Monat. Geht dir vor dem Zielalter das Geld komplett aus (Depotwert = 0), gilt dieser eine Lebenspfad als "Gescheitert". Überlebt dein Depot bis zum 95. Lebensjahr, gilt der Pfad als "Erfolgreich".
+
+#### 3. Was macht das System gesamthaft?
+Das System durchläuft dieses komplette 504-Monats-Szenario nicht nur einmal, sondern (je nach Slider) **z. B. 5.000 Mal**. Bei 5.000 Loops führt dein Computer in wenigen Sekunden über 2,5 Millionen Einzelmonats-Berechnungen durch.
+
+Am Ende sammelt das Programm alle 5.000 Lebensläufe ein und wertet sie statistisch für dich aus:
+* **Erfolgsquote:** Wie viele der 5.000 simulierten Zukünfte hast du finanziell überlebt? (Zeigt z. B. 98,5 %).
+* **Der Median (Blaue Linie):** Das ist der mittlere Weg. Genau 50 % der Simulationen liefen besser, 50 % liefen schlechter. Dies ist der wahrscheinlichste Ausgang deines Ruhestands.
+* **P10 & P90 (Der hellblaue Schlauch):** Das P10 (10. Perzentil) ist dein realistischer **Worst-Case**. Nur 10 % aller durchgespielten Crash-Szenarien verliefen noch schlimmer als diese untere Kante. Das P90 ist dein **Best-Case**.
+* **Der SWR-Rechner (Maximale Rente):** Wenn du auf den Button klickst, spielt das System dieses 5.000-fache Multiversum dutzende Male hintereinander mit verschiedenen Entnahmebeträgen durch. Es sucht vollautomatisch genau den Euro-Betrag für deine Rente, bei dem die Erfolgsquote am Ende bei punktgenau 95 % liegt.
+
+ durchhält.
 
 ### 📥 Excel-Export
 Der Export liefert detaillierte monatliche Daten für deine persönliche Archivierung und tiefergehende Analysen.
