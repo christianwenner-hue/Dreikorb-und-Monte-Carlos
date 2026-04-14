@@ -49,13 +49,37 @@ Der Krisen-Modus basiert auf der **Drawdown-Toleranz**. Das System merkt sich f�
 ### 1. Backtest Historie
 Ermöglicht den optischen Stresstest durch echte historische Krisen.
 * **Die Lupe:** Das eingegebene Startjahr dient lediglich der optischen Eingrenzung für den Chart, damit du dir gezielt bestimmte Epochen (z. B. ab 2008 oder ab 2016) im Detail ansehen kannst.
+* **Die Performance:** Das Tool berechnet dir automatisch die echte, zeitgewichtete Rendite (CAGR p.a.) deines Dreikorb-Mixes, völlig unabhängig von den entnommenen Rentenbeträgen.
 * **Ansicht:** Zeigt die Dreikorb-Strategie (Blau) im direkten Vergleich zu einem 100% Aktien-Vollinvest-Szenario (Orange).
 
-### 2. Die Monte-Carlo-Simulation (Multiversum)
-Berechnet nicht nur eine Zukunft, sondern ein Multiversum aus Tausenden verschiedenen Lebensläufen bis zu deinem Zielalter.
-* **Daten-Basis (Historisch vs. Mathematisch):** Zieht entweder zufällige, mathematisch berechnete Renditen (Glockenkurve) oder kombiniert echte, historische Monatsrenditen zufällig neu (*Bootstrapping*).
-* **Auswertung:** Liefert die absolute Erfolgsquote, den Median-Verlauf (die wahrscheinlichste Zukunft) sowie einen P10/P90-Schlauch (Worst-Case & Best-Case).
-* **SWR-Rechner:** Sucht per Knopfdruck vollautomatisch die exakte monatliche Netto-Rente, mit der du eine Erfolgsquote von exakt 95 % erreichst.
+### 2. 🔮 Die Monte-Carlo-Simulation (Das Multiversum deines Ruhestands)
+
+Während der historische Backtest dir zeigt, wie deine Strategie in der *Vergangenheit* (z. B. 2008) abgeschnitten hätte, wirft die Monte-Carlo-Simulation einen Blick in alle möglichen *Zukünfte*. Da niemand weiß, wie sich die Börse in den nächsten 30 Jahren exakt verhalten wird, berechnet das System nicht nur eine einzige Zukunft, sondern erschafft ein **"Multiversum" aus bis zu 5.000 verschiedenen Lebensläufen**. 
+
+#### 1. Auf welche Daten greift das System zu? (Die zwei Motoren)
+Bevor die Simulation startet, wählst du aus, aus welchem Daten-Pool das System die zukünftigen Börsenkurse würfeln soll:
+
+* **Methode A: Historisch (Bootstrapping):** Das ist der Realitäts-Check. Das System lädt alle echten, historisch gemessenen Monatsrenditen deines gewählten Index-Mixes herunter. Wenn es nun eine neue Zukunft simuliert, greift es blind in diesen großen Topf voller historischer Monate und zieht einen zufälligen heraus (z. B. den Krisen-Monat Oktober 1987, dann den Boom-Monat November 2020 usw.). Das nennt sich *Ziehen mit Zurücklegen*. So entstehen tausende neue, wilde Börsenverläufe, die aber alle aus echten, extremen historischen Marktschwankungen (Crashs und Rallyes) bestehen.
+* **Methode B: Mathematisch (Normalverteilung):** Das ist das akademische Modell. Du gibst über die Slider eine fiktive erwartete Rendite (z. B. 7,5 %) und eine Schwankungsbreite (Vola, z. B. 15 %) vor. Das System berechnet daraus eine klassische Glockenkurve und zieht für jeden Zukunftsmonat eine rein mathematische, zufällige Rendite.
+
+#### 2. Was passiert in EINEM Durchlauf (Szenario)?
+Ein einziger Durchlauf repräsentiert **einen kompletten Lebenspfad** von deinem Startalter bis zu deinem Zielalter (z. B. 42 Jahre = **504 Monate**). 
+
+Für jeden einzelnen dieser Monate rechnet das System im Hintergrund deine komplette Strategie-Logik durch:
+1. **Marktschwankung:** Das System würfelt die Rendite für den aktuellen Monat und passt den Wert deines Aktienkorbs (K3) an.
+2. **Inflation:** Deine garantierte Netto-Rente sowie die Ziel-Stände deiner Puffer (K1 & K2) werden um die Inflationsrate erhöht.
+3. **Der Krisen-Check:** Das System prüft deinen Drawdown. Liegt Korb 3 nahe am Allzeithoch oder herrscht Krise?
+4. **Steuer & Entnahme:** Das mitatmende Kassenbuch berechnet deinen exakten, aktuellen Kursgewinnanteil. Die Steuer wird abgezogen und die Rente (je nach Krisen-Status) aus K3 oder den Puffern entnommen.
+5. **Rebalancing:** Wenn Börsen-Boom herrscht, werden leere Puffer aus Korb 3 wieder aufgefüllt.
+
+Geht dir vor dem Zielalter das Geld komplett aus, gilt dieser Lebenspfad als "Gescheitert". Überlebt dein Depot bis zum Zielalter, gilt der Pfad als "Erfolgreich".
+
+#### 3. Was macht das System gesamthaft?
+Das System durchläuft dieses komplette 504-Monats-Szenario nicht nur einmal, sondern (je nach Slider) **z. B. 5.000 Mal**. Bei 5.000 Loops führt dein Computer in wenigen Sekunden über 2,5 Millionen Einzelmonats-Berechnungen durch. Am Ende sammelt das Programm alle Lebensläufe ein und wertet sie aus:
+* **Erfolgsquote:** Wie viele der simulierten Zukünfte hast du finanziell überlebt? (z. B. 98,5 %).
+* **Der Median (Blaue Linie):** Der mittlere Weg (50 % liefen besser, 50 % schlechter). Der wahrscheinlichste Ausgang.
+* **P10 & P90 (Der hellblaue Schlauch):** Das P10 ist dein **Worst-Case** (nur 10 % liefen schlechter). Das P90 ist dein **Best-Case**.
+* **Der SWR-Rechner (Maximale Rente):** Das System sucht vollautomatisch genau den Euro-Betrag für deine Rente, bei dem die Erfolgsquote am Ende bei punktgenau 95 % liegt.
 
 ### 3. 🎯 Der Optimizer (Der Autopilot für dein Setup)
 Dieses Modul beantwortet die wichtigste Frage: *"Wie muss ich mein aktuelles Gesamtkapital heute aufteilen, um die mathematisch höchste Überlebenswahrscheinlichkeit zu erreichen?"*
