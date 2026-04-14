@@ -7,7 +7,7 @@ from mathe_utils import lade_marktdaten
 import simulationen
 
 # --- UI SETUP ---
-st.set_page_config(page_title="Dreikorb Profi v10.9", layout="wide")
+st.set_page_config(page_title="Dreikorb Profi v12.0", layout="wide")
 st.title("📊 Dreikorb-Strategie Cockpit")
 
 # --- HEADER LAYOUT (4 SPALTEN) ---
@@ -60,18 +60,23 @@ with c_mc:
     mc_methode_ui = st.radio("MC Daten-Basis", ["Mathematisch (Normalverteilung)", "Historisch (Bootstrapping)"])
     use_seed = st.checkbox("Zufall einfrieren (Seed)", value=True)
 
-st.divider() # Optische Trennung zwischen Header und Charts
+st.divider()
 
 h_df = lade_marktdaten(portfolio_mix)
-t1, t2 = st.tabs(["📊 Backtest", "🔮 Monte-Carlo"])
+methode_param = "math" if "Mathematisch" in mc_methode_ui else "hist"
+t1, t2, t3 = st.tabs(["📊 Backtest", "🔮 Monte-Carlo", "🎯 Optimizer"])
 
 with t1:
     s_jahr = st.number_input("Startjahr", 2000, 2024, 2016)
     if not h_df.empty:
-        d3, _, dp, _, _ = simulationen.simuliere_historie(h_df, s_jahr, alt_j, k1_s, k2_s, k3_s, r_std, r_a, a_a, r_b, a_b, g_s, infl/100, k1_j, k2_j, schwelle)
+        d3, c_pa, dp, _, _ = simulationen.simuliere_historie(h_df, s_jahr, alt_j, k1_s, k2_s, k3_s, r_std, r_a, a_a, r_b, a_b, g_s, infl/100, k1_j, k2_j, schwelle)
         
         end_val_bt = int(dp['Gesamt'].iloc[-1])
-        st.metric("Endvermögen", f"{end_val_bt:,}".replace(",", ".") + " €")
+        
+        # Sauber 2 Metriken: Endvermögen und Durchschnitt p.a.
+        m1, m2 = st.columns(2)
+        m1.metric("Endvermögen", f"{end_val_bt:,}".replace(",", ".") + " €")
+        m2.metric("Ø Rendite Strategie p.a. (Brutto)", f"{c_pa * 100:.2f} %")
         
         chart_data = dp.copy()
         hover = alt.selection_point(fields=['Jahr'], nearest=True, on='mouseover', empty=False)
@@ -86,6 +91,7 @@ with t1:
                 alt.Tooltip('Status:N', title='Phase'),
                 alt.Tooltip('Brutto_Entnahme:Q', format=',.0f', title='Reale Entnahme Brutto (M) €'),
                 alt.Tooltip('Netto_Rente:Q', format=',.0f', title='Ziel-Rente Netto (M) €'),
+                alt.Tooltip('K3 ATH:Q', format=',.0f', title='K3 Allzeithoch €'),
                 alt.Tooltip('Gesamt:Q', format=',.0f', title='Dreikorb (Gesamt) €'), 
                 alt.Tooltip('Vollinvest:Q', format=',.0f', title='Vollinvest €')
             ]
@@ -96,7 +102,8 @@ with t1:
         st.subheader("📋 Monatliche Detail-Daten")
         st.dataframe(d3.style.format({
             "Rendite Mix": "{:.1f}%", 
-            "K1": "{:,.0f} €", "K2": "{:,.0f} €", "K3": "{:,.0f} €", 
+            "K1": "{:,.0f} €", "K2": "{:,.0f} €", 
+            "K3": "{:,.0f} €", "K3 ATH": "{:,.0f} €",
             "Gesamt": "{:,.0f} €", "Vollinvest": "{:,.0f} €", 
             "Netto_Rente": "{:,.0f} €", "Brutto_Entnahme": "{:,.0f} €"
         }), height=400)
@@ -109,9 +116,6 @@ with t1:
     else:
         st.error("📉 Keine Marktdaten.")
 with t2:
-    methode_param = "math" if "Mathematisch" in mc_methode_ui else "hist"
-    
-    # NEU: Transparente Warnung, falls Fallback greift
     if methode_param == "hist" and h_df.empty:
         st.warning("⚠️ Yahoo Finance liefert aktuell keine Daten. Das System nutzt als Fallback die mathematische Normalverteilung.")
         
@@ -156,6 +160,25 @@ with t2:
         with st.spinner("Rechne..."):
             max_r = simulationen.berechne_swr(n_sim, alt_j, alt_z, k1_s, k2_s, k3_s, g_s, exp_ret, exp_vol, infl, k1_j, k2_j, schwelle, seed=use_seed, method=methode_param, h_df=h_df)
             st.success(f"Max. sichere Rente: {int(max_r):,}".replace(",", ".") + " € / Monat")
+
+with t3:
+    st.markdown("### 🎯 Perfekte Startaufteilung finden")
+    total_capital = k1_s + k2_s + k3_s
+    st.info(f"Dein aktuelles Gesamtkapital (K1 + K2 + K3) beträgt **{total_capital:,.0f} €**.".replace(",", "."))
+    st.write("Der Optimizer testet vollautomatisch 30 verschiedene Puffer-Aufteilungen dieses Kapitals (Cash vs. Anleihen vs. Aktien), um das Setup mit der absolut höchsten Überlebenswahrscheinlichkeit zu finden.")
+    
+    if st.button("🚀 Optimizer starten", use_container_width=True):
+        with st.spinner("Berechne dutzende Kombinationen im Multiversum (das dauert ca. 5-10 Sekunden)..."):
+            df_opt = simulationen.optimiere_startaufteilung(total_capital, alt_j, alt_z, r_std, r_a, a_a, r_b, a_b, g_s, exp_ret, exp_vol, infl, schwelle, use_seed, methode_param, h_df)
+            
+            st.success("✅ Optimierung abgeschlossen! Hier sind die Top 5 besten Setups:")
+            
+            df_show = df_opt.head(5).copy()
+            df_show["Erfolgsquote"] = (df_show["Erfolgsquote"] * 100).apply(lambda x: f"{x:.1f} %")
+            for col in ["K1 (Start)", "K2 (Start)", "K3 (Start)", "Median Endwert"]:
+                df_show[col] = df_show[col].apply(lambda x: f"{x:,.0f} €".replace(",", "."))
+                
+            st.dataframe(df_show, use_container_width=True, hide_index=True)
 
 st.divider()
 try:
