@@ -26,14 +26,27 @@ def simuliere_historie(df, s_jahr, alt_s, k1_s, k2_s, k3_s, r_std, r_a, alt_a, r
     k3_ath = k3 
     
     # INITIALISIERUNG DES KASSENBUCHS
-    kaufwert = k3 * (1 - g_s) # Das steuerfreie Grundkapital
+    kaufwert = k3 * (1 - g_s)
+    
+    # Tracking für die durchschnittliche Jahresrendite (TWR)
+    twr_faktor = 1.0
+    monate_count = 0
     
     df_slice = df[df['Jahr'] >= s_jahr].copy()
     
     for m, (_, row) in enumerate(df_slice.iterrows()):
+        monate_count += 1
+        rendite = row['Rendite_Monat']
+        
+        # Echte Brutto-Performance des Mixes vor Entnahmen messen
+        ges_alt = k1 + k2 + k3
+        if ges_alt > 0:
+            w1, w2, w3 = k1 / ges_alt, k2 / ges_alt, k3 / ges_alt
+            ret_m = w1 * (1.015**(1/12) - 1) + w2 * (1.030**(1/12) - 1) + w3 * rendite
+            twr_faktor *= (1 + ret_m)
+            
         n_b = get_monatliche_rente(m, alt_s, r_std, r_a, alt_a, r_b, alt_b, infl_m)
         k1_lim, k2_lim = n_b * k1_j * 12, n_b * k2_j * 12
-        rendite = row['Rendite_Monat']
         
         k3 *= (1 + rendite)
         k_voll *= (1 + rendite)
@@ -41,7 +54,6 @@ def simuliere_historie(df, s_jahr, alt_s, k1_s, k2_s, k3_s, r_std, r_a, alt_a, r
         if k3 > k3_ath:
             k3_ath = k3
             
-        # DYNAMISCHE STEUERQUOTE BERECHNEN
         gewinn_abs = k3 - kaufwert
         g_akt = gewinn_abs / k3 if gewinn_abs > 0 and k3 > 0 else 0
             
@@ -50,16 +62,13 @@ def simuliere_historie(df, s_jahr, alt_s, k1_s, k2_s, k3_s, r_std, r_a, alt_a, r
         
         brutto_monat = 0
         
-        # CHECK: KRISEN-MODUS (Drawdown vom ATH)
         if k3 >= (k3_ath * (1 - schwelle)) and k3 > 0:
             status = "Normal"
             b_r, _ = berechne_brutto_und_steuer(n_b, g_akt)
             k3 -= b_r
-            # KAUFWERT NACHFÜHREN: Nur der Grundkapital-Anteil wird abgezogen
             kaufwert -= b_r * (1 - g_akt) 
             brutto_monat = b_r
             
-            # REBALANCING DER PUFFER
             if k1 < k1_lim:
                 diff = k1_lim - k1
                 b_ref, _ = berechne_brutto_und_steuer(diff, g_akt)
@@ -95,12 +104,18 @@ def simuliere_historie(df, s_jahr, alt_s, k1_s, k2_s, k3_s, r_std, r_a, alt_a, r
         
         results.append({
             "Jahr": int(row['Jahr']), "Monat": int(row['Monat']), 
-            "Rendite Mix": rendite * 100, "K1": math.ceil(k1), "K2": math.ceil(k2), "K3": math.ceil(k3), 
+            "Rendite Mix": rendite * 100, "K1": math.ceil(k1), "K2": math.ceil(k2), 
+            "K3": math.ceil(k3), "K3 ATH": math.ceil(k3_ath), 
             "Gesamt": math.ceil(k1+k2+k3), "Vollinvest": math.ceil(k_voll), 
             "Netto_Rente": math.ceil(n_b), "Brutto_Entnahme": math.ceil(brutto_monat), "Status": status
         })
         
-    return pd.DataFrame(results), None, pd.DataFrame(results).groupby("Jahr").last().reset_index(), None, None
+    res_df = pd.DataFrame(results)
+    
+    # Durchschnittliche Rendite p.a. (CAGR)
+    cagr_pa = (twr_faktor ** (12 / monate_count) - 1) if monate_count > 0 else 0
+    
+    return res_df, cagr_pa, res_df.groupby("Jahr").last().reset_index(), None, None
 def run_monte_carlo(n, alt_s, alt_z, k1_s, k2_s, k3_s, r_std, r_a, alt_a, r_b, alt_b, g_s, ret, vol, infl, k1_j, k2_j, schwelle, seed=True, method="math", h_df=None):
     if seed: np.random.seed(42)
     monate = int((alt_z - alt_s) * 12)
@@ -124,33 +139,22 @@ def run_monte_carlo(n, alt_s, alt_z, k1_s, k2_s, k3_s, r_std, r_a, alt_a, r_b, a
             r = np.random.choice(hist_renditen) if method == "hist" else np.random.normal(mu_m, sig_m)
             k3 *= (1+r)
             if k3 > k3_ath: k3_ath = k3
-                
-            # DYNAMISCHE STEUER NEUBERECHNEN
             gewinn_abs = k3 - kaufwert
             g_akt = gewinn_abs / k3 if gewinn_abs > 0 and k3 > 0 else 0
-            
             n_b = get_monatliche_rente(m, alt_s, r_std, r_a, alt_a, r_b, alt_b, inf_m)
             k1_lim, k2_lim = n_b * k1_j * 12, n_b * k2_j * 12
             
-            brutto_ist = 0
             if k3 >= (k3_ath * (1 - schwelle)) and k3 > 0: 
                 b_r, _ = berechne_brutto_und_steuer(n_b, g_akt)
-                k3 -= b_r
-                kaufwert -= b_r * (1 - g_akt)
-                brutto_ist = b_r
-                
-                # REBALANCING
+                k3 -= b_r; kaufwert -= b_r * (1 - g_akt); brutto_ist = b_r
                 if k1 < k1_lim:
-                    diff = k1_lim - k1
-                    b_ref, _ = berechne_brutto_und_steuer(diff, g_akt)
+                    diff = k1_lim - k1; b_ref, _ = berechne_brutto_und_steuer(diff, g_akt)
                     if k3 > b_ref: k3 -= b_ref; kaufwert -= b_ref * (1 - g_akt); k1 += diff
                 if k2 < k2_lim:
-                    diff = k2_lim - k2
-                    b_ref, _ = berechne_brutto_und_steuer(diff, g_akt)
+                    diff = k2_lim - k2; b_ref, _ = berechne_brutto_und_steuer(diff, g_akt)
                     if k3 > b_ref: k3 -= b_ref; kaufwert -= b_ref * (1 - g_akt); k2 += diff
             else:
-                brutto_ist = n_b
-                rem = n_b
+                brutto_ist = n_b; rem = n_b
                 if k1 >= rem: k1 -= rem
                 else:
                     rem -= k1; k1 = 0
@@ -158,13 +162,10 @@ def run_monte_carlo(n, alt_s, alt_z, k1_s, k2_s, k3_s, r_std, r_a, alt_a, r_b, a
                     else: 
                         b_n, _ = berechne_brutto_und_steuer(rem-k2, g_akt)
                         k3 -= b_n; kaufwert -= b_n * (1 - g_akt); k2 = 0
-                        
             k1 *= (1.015**(1/12)); k2 *= (1.03**(1/12))
-            results[i,m] = k1+k2+k3
-            results_brutto[i,m] = brutto_ist
+            results[i,m] = k1+k2+k3; results_brutto[i,m] = brutto_ist
             if results[i,m] <= 0: alive = False; break
         if alive: success += 1
-        
     return results, results_brutto, success / n
 
 def berechne_swr(n, alt_s, alt_z, k1_s, k2_s, k3_s, g_s, ret, vol, infl, k1_j, k2_j, schwelle, seed=True, method="math", h_df=None):
@@ -175,3 +176,21 @@ def berechne_swr(n, alt_s, alt_z, k1_s, k2_s, k3_s, g_s, ret, vol, infl, k1_j, k
         if rate >= 0.95: best, low = mid, mid
         else: high = mid
     return int(best)
+
+def optimiere_startaufteilung(total_cap, alt_s, alt_z, r_std, r_a, alt_a, r_b, alt_b, g_s, ret, vol, infl, schwelle, seed, method, h_df):
+    k1_grid = [0.5, 1.0, 1.5, 2.0, 3.0]
+    k2_grid = [0.0, 1.0, 2.0, 3.0, 4.0, 5.0]
+    results_opt = []
+    inf_m = (1 + infl / 100)**(1/12) - 1
+    n_b_start = get_monatliche_rente(0, alt_s, r_std, r_a, alt_a, r_b, alt_b, inf_m)
+    jahresrente_netto = n_b_start * 12
+    for k1_j in k1_grid:
+        for k2_j in k2_grid:
+            k1_start = jahresrente_netto * k1_j
+            k2_start = jahresrente_netto * k2_j
+            k3_start = total_cap - k1_start - k2_start
+            if k3_start < total_cap * 0.2: continue 
+            res, _, rate = run_monte_carlo(250, alt_s, alt_z, k1_start, k2_start, k3_start, r_std, r_a, alt_a, r_b, alt_b, g_s, ret, vol, infl, k1_j, k2_j, schwelle, seed, method, h_df)
+            median_end = np.median(res[:, -1])
+            results_opt.append({"K1 Puffer": f"{k1_j} J", "K2 Puffer": f"{k2_j} J", "K1 (Start)": k1_start, "K2 (Start)": k2_start, "K3 (Start)": k3_start, "Erfolgsquote": rate, "Median Endwert": median_end})
+    return pd.DataFrame(results_opt).sort_values(by=["Erfolgsquote", "Median Endwert"], ascending=[False, False]).reset_index(drop=True)
