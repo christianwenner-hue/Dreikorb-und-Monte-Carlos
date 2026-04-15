@@ -73,13 +73,13 @@ with t1:
         
         end_val_bt = int(dp['Gesamt'].iloc[-1])
         
-        # Sauber 2 Metriken: Endvermögen und Durchschnitt p.a.
         m1, m2 = st.columns(2)
         m1.metric("Endvermögen", f"{end_val_bt:,}".replace(",", ".") + " €")
         m2.metric("Ø Rendite Strategie p.a. (Brutto)", f"{c_pa * 100:.2f} %")
         
         chart_data = dp.copy()
-        hover = alt.selection_point(fields=['Jahr'], nearest=True, on='mouseover', empty=False)
+        # HIER IST DER FIX: clear='mouseout' hinzugefügt, damit das Scrollen nicht mehr einfriert
+        hover = alt.selection_point(fields=['Jahr'], nearest=True, on='mouseover', empty=False, clear='mouseout')
         base = alt.Chart(chart_data).encode(x='Jahr:O')
         l1 = base.mark_line(color='#1f77b4', strokeWidth=3).encode(y=alt.Y('Gesamt:Q', scale=alt.Scale(zero=False)))
         l2 = base.mark_line(color='#ff7f0e', strokeDash=[5,5]).encode(y='Vollinvest:Q')
